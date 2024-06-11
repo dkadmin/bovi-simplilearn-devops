@@ -1,0 +1,65 @@
+---
+ - hosts: webservers
+   remote_user: ubuntu
+  
+   tasks:
+    - name: ensure the jenkins apt repository key is installed
+      apt_key: url=https://pkg.jenkins.io/debian/jenkins.io-2023.key state=present
+      become: yes
+
+    - name: ensure the repository is configured
+      apt_repository: repo='deb https://pkg.jenkins.io/debian-stable binary/' state=present
+      become: yes
+
+    - name: ensure jenkins is installed
+      apt: name=jenkins update_cache=yes
+      become: yes
+
+    - name: ensure jenkins is running
+      service: name=jenkins state=started
+
+    - name: Update apt repo and cache on all Debian/Ubuntu boxes
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+      become: true
+    - name: Upgrade all apt packages
+      apt: upgrade=yes force_apt_get=yes
+      become: true
+    - name: Install Python pip
+      apt: name={{ item }} update_cache=true state=present force_apt_get=yes
+      with_items:
+         - python3
+         - python3-pip
+         - build-essential
+         - python3-dev
+         - python3-pip
+         - libpcre3
+         - libpcre3-dev
+         - libpq-dev
+         - debhelper
+      become: true
+        #    - name: Install Python packages
+        #pip: name={{ item }}
+        #with_items:
+        # - psycopg2-binary
+        #become: true
+    - name: Install Python3.12
+      apt: name={{item}} state=present update_cache=yes
+      with_items:
+        - python3.12
+      become: true
+ 
+ 
+    - name: Update all Ubuntu packages
+      apt:
+        upgrade: "dist"
+      when: ansible_distribution == 'Ubuntu'
+      become: true
+
+    - name: Install required Ubuntu packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+        - openjdk-8-jdk
+      become: true
